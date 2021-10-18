@@ -11,6 +11,6 @@
     "strict": true,
     "moduleResolution": "node"
   },
-  "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules", "prod_node_modules", "dist"]
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules", "prod_node_modules", "dist", "docs"]
 }

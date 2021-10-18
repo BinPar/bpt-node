@@ -120,21 +120,22 @@ jobs:
           STATUS_ARRAY: ${{ join(needs.*.result, ' ') }}
         run: |
           status='success'
-          for $inputStatus in $STATUS_ARRAY
+          for inputStatus in $STATUS_ARRAY
           do
-            if [$inputStatus == 'failure']
+            if [ "$inputStatus" == 'failure' ]
             then
-              status=$inputStatus
+              status="$inputStatus"
               break
-            elif [$inputStatus == 'cancelled']
+            elif [ "$inputStatus" == 'cancelled' ]
+            then
               status=$inputStatus
             fi
           done
           echo "::set-output name=status::$status"
-          avatar=${{ secrets.DISCORD_AVATAR_URL }}
-          if [$status != 'success']
+          avatar="${{ secrets.DISCORD_AVATAR_URL }}"
+          if [ "$status" != 'success' ]
           then
-            avatar=${{ secrets.DISCORD_AVATAR_URL_ERROR }}
+            avatar="${{ secrets.DISCORD_AVATAR_URL_ERROR }}"
           fi
           echo "::set-output name=avatar::$avatar"
       - name: Notify PR checks status

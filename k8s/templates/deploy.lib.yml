@@ -13,6 +13,8 @@
 metadata:
   labels: #@ utils.defaultLabels("pod")
 spec:
+  #@ if/end data.values.resourceType != 'Deploy':
+  restartPolicy: Never
   containers:
     - image: #@ utils.imageName()
       imagePullPolicy: Always

@@ -86,7 +86,7 @@ jobs:
             Successfully tagged as **${{ env.TAG_TYPE }}** and redeployed.
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
           avatar_url: ${{ secrets.DISCORD_AVATAR_URL }}
-          username: 'BinFlow CI / CD'
+          username: "BinFlow CI / CD"
       - name: Tag image failed
         uses: sarisia/actions-status-discord@v1
         if: failure()
@@ -97,7 +97,7 @@ jobs:
             Project: `${{ steps.project-name-data.outputs.data }}`
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
           avatar_url: ${{ secrets.DISCORD_AVATAR_URL }}
-          username: 'BinFlow CI / CD'
+          username: "BinFlow CI / CD"
       - name: Tag image cancelled
         uses: sarisia/actions-status-discord@v1
         if: cancelled()
@@ -108,4 +108,4 @@ jobs:
             Project: `${{ steps.project-name-data.outputs.data }}`
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
           avatar_url: ${{ secrets.DISCORD_AVATAR_URL }}
-          username: 'BinFlow CI / CD'
+          username: "BinFlow CI / CD"

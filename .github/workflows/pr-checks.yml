@@ -129,6 +129,9 @@ jobs:
             elif [ "$inputStatus" == 'cancelled' ]
             then
               status=$inputStatus
+            elif [ "$inputStatus" == 'skipped' ]
+            then
+              status='cancelled'
             fi
           done
           echo "::set-output name=status::$status"
@@ -147,4 +150,4 @@ jobs:
             Más info en el futuro...
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
           avatar_url: ${{ steps.get-options.outputs.avatar }}
-          username: 'BinFlow CI / CD'
+          username: "BinFlow CI / CD"

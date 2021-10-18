@@ -81,13 +81,24 @@ jobs:
       - name: Switch rancher context to project
         id: switch-context
         run: ./.github/workflows/rancher-switch-context-to-project.sh "${{ steps.project-name-data.outputs.data }}"
+      - name: Read resourceType name
+        uses: KJ002/read-yaml@1.5
+        id: resource-type-data
+        with:
+          file: './k8s/templates/values.yml'
+          key-path: '["resourceType"]'
+      - name: Compile k8s templates
+        run: |
+          ./.github/workflows/compile-k8s-templates.sh "${{ env.CUSTOM_ENVIRONMENT }}"
+          K8S_NAMESPACE_NAME=$(./.github/workflows/get-namespace-name.js)
+          echo "K8S_NAMESPACE_NAME=$K8S_NAMESPACE_NAME" >> $GITHUB_ENV
+      - name: Delete job if exists
+        if: steps.resource-type-data.outputs.data == 'Job'
+        run: ./.github/workflows/rancher-remove-job-if-exists.sh "${{ env.K8S_NAMESPACE_NAME }}" "${{ steps.project-name-data.outputs.data }}" "${{ env.CUSTOM_ENVIRONMENT }}"
       - name: Check k8s resources and create if not exists
         run: ./.github/workflows/create-k8s-if-not-exists.sh "${{ env.CUSTOM_ENVIRONMENT }}"
       - name: Move namespace if not in project
-        run: |
-          K8S_NAMESPACE_NAME=$(./.github/workflows/get-namespace-name.js)
-          ./.github/workflows/rancher-move-namespace-if-not-in-project.sh "${K8S_NAMESPACE_NAME}" "${{ steps.project-name-data.outputs.data }}"
-          echo "K8S_NAMESPACE_NAME=$K8S_NAMESPACE_NAME" >> $GITHUB_ENV
+        run: ./.github/workflows/rancher-move-namespace-if-not-in-project.sh "${{ env.K8S_NAMESPACE_NAME }}" "${{ steps.project-name-data.outputs.data }}"
       - run: npm i node-fetch@cjs --save=false
       - name: Get repository team ids
         uses: actions/github-script@v5
@@ -164,15 +175,9 @@ jobs:
         run: |
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$NEXT_VERSION $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.CUSTOM_ENVIRONMENT }}
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.CUSTOM_ENVIRONMENT }}
-      - name: Read resourceType name
-        uses: KJ002/read-yaml@1.5
-        id: resource-type-data
-        with:
-          file: './k8s/templates/values.yml'
-          key-path: '["resourceType"]'
       - name: Redeploy to apply new image
-        if: steps.resource-type-data.outputs.data != "CronJob"
-        run: ./.github/workflows/rancher-redeploy.sh "${{ env.K8S_NAMESPACE_NAME }}" "${{ steps.project-name-data.outputs.data }}" "${{ env.CUSTOM_ENVIRONMENT }}" "${{ steps.resource-type-data.outputs.data }}"
+        if: steps.resource-type-data.outputs.data == 'Deploy'
+        run: ./.github/workflows/rancher-redeploy.sh "${{ env.K8S_NAMESPACE_NAME }}" "${{ steps.project-name-data.outputs.data }}" "${{ env.CUSTOM_ENVIRONMENT }}"
       - name: Notify discord success
         uses: sarisia/actions-status-discord@v1
         if: success()

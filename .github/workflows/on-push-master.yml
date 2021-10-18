@@ -24,6 +24,7 @@ jobs:
         with:
           only: ytt
           ytt: '0.36.0'
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Get next version
         run: |
           echo "CUSTOM_ENVIRONMENT=test" >> $GITHUB_ENV

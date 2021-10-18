@@ -1,0 +1,192 @@
+name: Build, version and tag
+on:
+  push:
+    paths-ignore:
+      - 'CHANGELOG.md'
+      - 'package-lock.json'
+      - 'package.json'
+    branches:
+      - main
+jobs:
+  build_version_tag:
+    name: Build, version and tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.ADMIN_GITHUB_TOKEN }}
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - uses: vmware-tanzu/carvel-setup-action@v1
+        with:
+          only: ytt
+          ytt: '0.36.0'
+      - name: Get next version
+        run: |
+          echo "CUSTOM_ENVIRONMENT=test" >> $GITHUB_ENV
+          NEXT_VERSION_WITHOUT_V=$(npm_config_yes=true npx standard-version --dry-run | head -n 1 | sed -n -e 's/.*bumping version in .* from .* to \(.*\).*/\1/p')
+          echo "NEXT_VERSION_WITHOUT_V=$NEXT_VERSION_WITHOUT_V" >> $GITHUB_ENV
+          echo "NEXT_VERSION=v$NEXT_VERSION_WITHOUT_V" >> $GITHUB_ENV
+      - name: Read project name
+        uses: KJ002/read-yaml@1.5
+        id: project-name-data
+        with:
+          file: './k8s/templates/values.yml'
+          key-path: '["projectName"]'
+      - name: Info new version
+        uses: sarisia/actions-status-discord@v1
+        with:
+          color: 0x334df5
+          noprefix: true
+          title: Building new version
+          description: |
+            Version `${{ env.NEXT_VERSION }}`
+            Project `${{ steps.project-name-data.outputs.data }}`
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          avatar_url: ${{ secrets.DISCORD_AVATAR_URL }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
+      - name: Create ECR repository if not exists
+        run: ./.github/workflows/create-ecr-repository-if-not-exists.sh ${{ steps.project-name-data.outputs.data }}
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+      - name: Build image and push
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ steps.project-name-data.outputs.data }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$NEXT_VERSION -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$NEXT_VERSION
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+      - name: Setup Kubernetes Tools
+        uses: yokawasa/action-setup-kube-tools@v0.8.0
+        id: kubernetes-tools
+        with:
+          setup-tools: |
+            kubectl
+            rancher
+      - name: Login rancher
+        run: rancher login --token ${{ secrets.RANCHER_TOKEN }} --context ${{ secrets.RANCHER_CONTEXT }} ${{ secrets.RANCHER_URL }}
+      - name: Create rancher project if not exists
+        run: ./.github/workflows/create-rancher-project-if-not-exists.sh "${{ steps.project-name-data.outputs.data }}"
+      - name: Switch rancher context to project
+        id: switch-context
+        run: ./.github/workflows/rancher-switch-context-to-project.sh "${{ steps.project-name-data.outputs.data }}"
+      - name: Check k8s resources and create if not exists
+        run: ./.github/workflows/create-k8s-if-not-exists.sh "${{ env.CUSTOM_ENVIRONMENT }}"
+      - name: Move namespace if not in project
+        run: |
+          K8S_NAMESPACE_NAME=$(./.github/workflows/get-namespace-name.js)
+          ./.github/workflows/rancher-move-namespace-if-not-in-project.sh "${K8S_NAMESPACE_NAME}" "${{ steps.project-name-data.outputs.data }}"
+          echo "K8S_NAMESPACE_NAME=$K8S_NAMESPACE_NAME" >> $GITHUB_ENV
+      - run: npm i node-fetch@cjs --save=false
+      - name: Get repository team ids
+        uses: actions/github-script@v5
+        id: repo-teams
+        with:
+          result-encoding: string
+          github-token: ${{ secrets.ADMIN_GITHUB_TOKEN }}
+          script: |
+            const fetch = require('node-fetch');
+            const response = await fetch(
+              'https://rancheremp.binpar.cloud/v3/projectRoleTemplateBindings?projectId=${{ steps.switch-context.outputs.projectId }}',
+              {
+                method: 'get',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer ${{ secrets.RANCHER_TOKEN }}',
+                },
+              },
+            );
+            const { data: projectTeams } = await response.json();
+            const projectTeamIds =
+              projectTeams && projectTeams.length > 0
+                ? projectTeams.map((project) =>
+                    (project.groupPrincipalId || '').replace('github_team://', ''),
+                  )
+                : [];
+
+            const teamsResponse = await github.rest.repos.listTeams({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            if (teamsResponse.status === 200) {
+              const teams = teamsResponse.data;
+              if (teams && teams.length > 0) {
+                return teams
+                  .map((team) => team.id)
+                  .filter((id) => !projectTeamIds.includes(`${id}`))
+                  .join(' ');
+              }
+            }
+            return '';
+      - name: Grant rancher member to teams
+        if: steps.repo-teams.outputs.result != ''
+        run: |
+          for team in "${{ steps.repo-teams.outputs.result }}"
+          do
+            curl 'https://rancheremp.binpar.cloud/v3/projectroletemplatebinding' \
+              -H 'Authorization: Bearer ${{ secrets.RANCHER_TOKEN }}' \
+              -H 'content-type: application/json' \
+              -H 'accept: application/json' \
+              --data-raw "{\"type\":\"projectRoleTemplateBinding\",\"projectId\":\"${{ steps.switch-context.outputs.projectId }}\",\"groupPrincipalId\":\"github_team://$team\",\"roleTemplateId\":\"project-member\"}" \
+              --compressed
+          done
+      - name: Exec standard-version and update repo
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          npm_config_yes=true npx standard-version
+          git push
+          git push --tags
+          git checkout develop
+          git pull origin develop
+          git cherry-pick --strategy-option theirs main
+          git push
+      - name: Read CHANGELOG
+        uses: BinPar/read-conventional-commit-changelog@v1
+        id: changelog
+        with:
+          version: '${{ env.NEXT_VERSION }}'
+      - name: Tag docker image as test
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ steps.project-name-data.outputs.data }}
+        run: |
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$NEXT_VERSION $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.CUSTOM_ENVIRONMENT }}
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.CUSTOM_ENVIRONMENT }}
+      - name: Redeploy to apply new image
+        run: ./.github/workflows/rancher-redeploy.sh "${{ env.K8S_NAMESPACE_NAME }}" "${{ steps.project-name-data.outputs.data }}" "${{ env.CUSTOM_ENVIRONMENT }}"
+      - name: Notify discord success
+        uses: sarisia/actions-status-discord@v1
+        if: success()
+        with:
+          title: Deploy to `test` environment
+          description: |
+            Version: `${{ env.NEXT_VERSION }}`
+            Project: `${{ steps.project-name-data.outputs.data }}`
+            Successfully built, tagged and deployed to test environment
+            Create release: ${{ github.server_url }}/${{ github.repository }}/releases/new?tag=${{ env.NEXT_VERSION }}
+            CHANGELOG.md and package.json were updated.
+            Current version CHANGELOG:
+            ${{ steps.changelog.outputs.version-changelog }}
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          avatar_url: ${{ secrets.DISCORD_AVATAR_URL }}
+      - name: Notify discord failed or cancelled
+        uses: sarisia/actions-status-discord@v1
+        if: failure() || cancelled()
+        with:
+          title: Deploy to `test` environment
+          description: |
+            Version: `${{ env.NEXT_VERSION }}`
+            Project: `${{ steps.project-name-data.outputs.data }}`
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          avatar_url: ${{ secrets.DISCORD_AVATAR_URL }}

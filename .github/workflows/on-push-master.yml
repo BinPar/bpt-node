@@ -164,8 +164,15 @@ jobs:
         run: |
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$NEXT_VERSION $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.CUSTOM_ENVIRONMENT }}
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.CUSTOM_ENVIRONMENT }}
+      - name: Read resourceType name
+        uses: KJ002/read-yaml@1.5
+        id: resource-type-data
+        with:
+          file: './k8s/templates/values.yml'
+          key-path: '["resourceType"]'
       - name: Redeploy to apply new image
-        run: ./.github/workflows/rancher-redeploy.sh "${{ env.K8S_NAMESPACE_NAME }}" "${{ steps.project-name-data.outputs.data }}" "${{ env.CUSTOM_ENVIRONMENT }}"
+        if: steps.resource-type-data.outputs.data != "CronJob"
+        run: ./.github/workflows/rancher-redeploy.sh "${{ env.K8S_NAMESPACE_NAME }}" "${{ steps.project-name-data.outputs.data }}" "${{ env.CUSTOM_ENVIRONMENT }}" "${{ steps.resource-type-data.outputs.data }}"
       - name: Notify discord success
         uses: sarisia/actions-status-discord@v1
         if: success()

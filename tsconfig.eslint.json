@@ -6,11 +6,10 @@
     "module": "commonjs",
     "declaration": true,
     "sourceMap": true,
-    "outDir": "./dist",
-    "rootDir": "src",
+    "rootDir": ".",
     "strict": true,
     "moduleResolution": "node"
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "prod_node_modules", "dist", "docs", "tests"]
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "prod_node_modules", "dist", "docs"]
 }

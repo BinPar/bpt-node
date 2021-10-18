@@ -9,24 +9,26 @@
     "prettier"
   ],
   "settings": {
-    "import/extensions": [".js", ".jsx", ".ts", ".tsx"],
+    "react": {
+      "version": "999.999.999"
+    },
+    "import/extensions": [".js", ".ts"],
     "import/parsers": {
-      "@typescript-eslint/parser": [".ts", ".tsx"]
+      "@typescript-eslint/parser": [".ts"]
     },
     "import/resolver": {
       "node": {
-        "extensions": [".js", ".jsx", ".ts", ".tsx"]
+        "extensions": [".js", ".ts"]
       }
     }
   },
   "parserOptions": {
-    "project": "./tsconfig.json"
+    "project": "./tsconfig.eslint.json"
   },
   "rules": {
     "no-unused-vars": "off",
     "no-plusplus": "off",
     "no-underscore-dangle": "off",
-    "jsx-a11y/anchor-is-valid": "off",
     "@typescript-eslint/no-misused-promises": [
       "error",
       {

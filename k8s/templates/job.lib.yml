@@ -10,7 +10,7 @@ template: #@ getPodSpec()
 #@ end
 
 #@ def getJob():
-apiVersion: apps/v1
+apiVersion: batch/v1
 kind: Job
 metadata:
   name: #@ utils.jobName()

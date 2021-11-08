@@ -1,5 +1,6 @@
 #@data/values
 ---
+rancherProjectName: "bpt-node"
 projectName: bpt-node-job
 resourceType: Job
 hasIngress: False

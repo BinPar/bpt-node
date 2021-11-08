@@ -37,6 +37,12 @@ jobs:
         with:
           file: './k8s/templates/values.yml'
           key-path: '["projectName"]'
+      - name: Read rancher project name
+        uses: KJ002/read-yaml@1.5
+        id: rancher-project-name-data
+        with:
+          file: './k8s/templates/values.yml'
+          key-path: '["rancherProjectName"]'
       - name: Info new version
         uses: sarisia/actions-status-discord@v1
         with:
@@ -78,10 +84,10 @@ jobs:
       - name: Login rancher
         run: rancher login --token ${{ secrets.RANCHER_TOKEN }} --context ${{ secrets.RANCHER_CONTEXT }} ${{ secrets.RANCHER_URL }}
       - name: Create rancher project if not exists
-        run: ./.github/workflows/create-rancher-project-if-not-exists.sh "${{ steps.project-name-data.outputs.data }}"
+        run: ./.github/workflows/create-rancher-project-if-not-exists.sh "${{ steps.rancher-project-name-data.outputs.data }}"
       - name: Switch rancher context to project
         id: switch-context
-        run: ./.github/workflows/rancher-switch-context-to-project.sh "${{ steps.project-name-data.outputs.data }}"
+        run: ./.github/workflows/rancher-switch-context-to-project.sh "${{ steps.rancher-project-name-data.outputs.data }}"
       - name: Read resourceType name
         uses: KJ002/read-yaml@1.5
         id: resource-type-data
@@ -99,7 +105,7 @@ jobs:
       - name: Check k8s resources and create if not exists
         run: ./.github/workflows/create-k8s-if-not-exists.sh "${{ env.CUSTOM_ENVIRONMENT }}"
       - name: Move namespace if not in project
-        run: ./.github/workflows/rancher-move-namespace-if-not-in-project.sh "${{ env.K8S_NAMESPACE_NAME }}" "${{ steps.project-name-data.outputs.data }}"
+        run: ./.github/workflows/rancher-move-namespace-if-not-in-project.sh "${{ env.K8S_NAMESPACE_NAME }}" "${{ steps.rancher-project-name-data.outputs.data }}"
       - run: npm i node-fetch@cjs --save=false
       - name: Get repository team ids
         uses: actions/github-script@v5

@@ -27,6 +27,12 @@ spec:
         - #@ envSource
         #@   end
         #@ end
+      #@ if data.values.additionalDeployEnv:
+      env:
+        #@   for env in data.values.additionalDeployEnv:
+        - #@ env
+        #@   end
+      #@ end
       #@ if data.values.useHttp:
       ports:
         - containerPort: 80

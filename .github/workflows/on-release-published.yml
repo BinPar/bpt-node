@@ -63,6 +63,7 @@ jobs:
         run: |
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$NEXT_VERSION $ECR_REGISTRY/$ECR_REPOSITORY:pre-release
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:pre-release
+          ./.github/workflows/compile-k8s-templates.sh "pre-release"
           ./.github/workflows/create-k8s-if-not-exists.sh "pre-release"
           K8S_NAMESPACE_NAME=$(./.github/workflows/get-namespace-name.js)
           ./.github/workflows/rancher-move-namespace-if-not-in-project.sh "${K8S_NAMESPACE_NAME}" "${{ steps.rancher-project-name-data.outputs.data }}"
@@ -76,6 +77,7 @@ jobs:
         run: |
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$NEXT_VERSION $ECR_REGISTRY/$ECR_REPOSITORY:release
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:release
+          ./.github/workflows/compile-k8s-templates.sh "release"
           ./.github/workflows/create-k8s-if-not-exists.sh "release"
           K8S_NAMESPACE_NAME=$(./.github/workflows/get-namespace-name.js)
           ./.github/workflows/rancher-move-namespace-if-not-in-project.sh "${K8S_NAMESPACE_NAME}" "${{ steps.rancher-project-name-data.outputs.data }}"

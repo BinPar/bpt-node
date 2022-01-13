@@ -77,9 +77,13 @@ end
 
 def defaultHostname():
   if isRelease():
-  return data.values.productionDomain
+    if data.values.productionDomain:
+      return data.values.productionDomain
+    else:
+      return data.values.projectName+"." + data.values.defaultRootDomain
+    end
   else:
-  return data.values.projectName+"-"+data.values.environment+"." + data.values.defaultRootDomain
+    return data.values.projectName+"-"+data.values.environment+"." + data.values.defaultRootDomain
   end
 end
 

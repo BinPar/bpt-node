@@ -1,6 +1,6 @@
 {
   "name": "bpt-node",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Node - BinPar Template",
   "engines": {
     "node": ">=16"

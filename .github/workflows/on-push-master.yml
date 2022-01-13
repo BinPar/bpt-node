@@ -212,5 +212,5 @@ jobs:
             Version: `${{ env.NEXT_VERSION }}`
             Project: `${{ steps.project-name-data.outputs.data }}`
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
-          avatar_url: ${{ secrets.DISCORD_AVATAR_URL }}
+          avatar_url: ${{ secrets.DISCORD_AVATAR_URL_ERROR }}
           username: 'BinFlow CI / CD'

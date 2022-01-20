@@ -43,7 +43,7 @@ Dentro de "Settings" vamos a "Branches".
 
 Ahí veremos "Branch protection rules" y al lado un botón de "Add rule".
 
-En el interfaz que nos aparece dentro de "Branch name pattern" pondremos `main` y en "Protect matching branches" marcaremos "Require status checks to pass before merging" y dentro de esa buscaremos en el input los siguientes checks:
+En el interfaz que nos aparece dentro de "Branch name pattern" pondremos `main` y en "Protect matching branches" marcaremos "Require status checks to pass before merging" y dentro de esa buscaremos en el input los siguientes checks (recuerda: debes haber creado una pull request, sin necesidad de cerrarla, para que te aparezca el input que usarás para añadir los checks):
  - You shall not pass!
  - NPM Audit
  - Lint code

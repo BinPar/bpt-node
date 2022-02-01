@@ -67,7 +67,6 @@ jobs:
           ./.github/workflows/create-k8s-if-not-exists.sh "pre-release"
           K8S_NAMESPACE_NAME=$(./.github/workflows/get-namespace-name.js)
           ./.github/workflows/rancher-move-namespace-if-not-in-project.sh "${K8S_NAMESPACE_NAME}" "${{ steps.rancher-project-name-data.outputs.data }}"
-          ./.github/workflows/rancher-redeploy.sh "${K8S_NAMESPACE_NAME}" "${{ steps.project-name-data.outputs.data }}" "pre-release"
           echo "TAG_TYPE=pre-release" >> $GITHUB_ENV
       - name: Tag as release
         if: '!github.event.release.prerelease'
@@ -81,8 +80,16 @@ jobs:
           ./.github/workflows/create-k8s-if-not-exists.sh "release"
           K8S_NAMESPACE_NAME=$(./.github/workflows/get-namespace-name.js)
           ./.github/workflows/rancher-move-namespace-if-not-in-project.sh "${K8S_NAMESPACE_NAME}" "${{ steps.rancher-project-name-data.outputs.data }}"
-          ./.github/workflows/rancher-redeploy.sh "${K8S_NAMESPACE_NAME}" "${{ steps.project-name-data.outputs.data }}" "release"
           echo "TAG_TYPE=release" >> $GITHUB_ENV
+      - name: Read resourceType name
+        uses: KJ002/read-yaml@1.5
+        id: resource-type-data
+        with:
+          file: './k8s/templates/values.yml'
+          key-path: '["resourceType"]'
+      - name: Redeploy to apply new image
+        if: steps.resource-type-data.outputs.data == 'Deploy'
+        run: ./.github/workflows/rancher-redeploy.sh "${K8S_NAMESPACE_NAME}" "${{ steps.project-name-data.outputs.data }}" "${{ env.TAG_TYPE }}"
       - name: Tag image success
         uses: sarisia/actions-status-discord@v1
         if: success()
@@ -94,7 +101,7 @@ jobs:
             Successfully tagged as **${{ env.TAG_TYPE }}** and redeployed.
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
           avatar_url: ${{ secrets.DISCORD_AVATAR_URL }}
-          username: "BinFlow CI / CD"
+          username: 'BinFlow CI / CD'
       - name: Tag image failed
         uses: sarisia/actions-status-discord@v1
         if: failure()
@@ -105,7 +112,7 @@ jobs:
             Project: `${{ steps.project-name-data.outputs.data }}`
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
           avatar_url: ${{ secrets.DISCORD_AVATAR_URL_ERROR }}
-          username: "BinFlow CI / CD"
+          username: 'BinFlow CI / CD'
       - name: Tag image cancelled
         uses: sarisia/actions-status-discord@v1
         if: cancelled()
@@ -116,4 +123,4 @@ jobs:
             Project: `${{ steps.project-name-data.outputs.data }}`
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
           avatar_url: ${{ secrets.DISCORD_AVATAR_URL_ERROR }}
-          username: "BinFlow CI / CD"
+          username: 'BinFlow CI / CD'

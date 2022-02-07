@@ -67,6 +67,7 @@ jobs:
           ./.github/workflows/create-k8s-if-not-exists.sh "pre-release"
           K8S_NAMESPACE_NAME=$(./.github/workflows/get-namespace-name.js)
           ./.github/workflows/rancher-move-namespace-if-not-in-project.sh "${K8S_NAMESPACE_NAME}" "${{ steps.rancher-project-name-data.outputs.data }}"
+          echo "K8S_NAMESPACE_NAME=$K8S_NAMESPACE_NAME" >> $GITHUB_ENV
           echo "TAG_TYPE=pre-release" >> $GITHUB_ENV
       - name: Tag as release
         if: '!github.event.release.prerelease'
@@ -80,6 +81,7 @@ jobs:
           ./.github/workflows/create-k8s-if-not-exists.sh "release"
           K8S_NAMESPACE_NAME=$(./.github/workflows/get-namespace-name.js)
           ./.github/workflows/rancher-move-namespace-if-not-in-project.sh "${K8S_NAMESPACE_NAME}" "${{ steps.rancher-project-name-data.outputs.data }}"
+          echo "K8S_NAMESPACE_NAME=$K8S_NAMESPACE_NAME" >> $GITHUB_ENV
           echo "TAG_TYPE=release" >> $GITHUB_ENV
       - name: Read resourceType name
         uses: KJ002/read-yaml@1.5
@@ -89,7 +91,7 @@ jobs:
           key-path: '["resourceType"]'
       - name: Redeploy to apply new image
         if: steps.resource-type-data.outputs.data == 'Deploy'
-        run: ./.github/workflows/rancher-redeploy.sh "${K8S_NAMESPACE_NAME}" "${{ steps.project-name-data.outputs.data }}" "${{ env.TAG_TYPE }}"
+        run: ./.github/workflows/rancher-redeploy.sh "${{ env.K8S_NAMESPACE_NAME }}" "${{ steps.project-name-data.outputs.data }}" "${{ env.TAG_TYPE }}"
       - name: Tag image success
         uses: sarisia/actions-status-discord@v1
         if: success()

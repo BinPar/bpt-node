@@ -115,6 +115,34 @@ jobs:
           ./.github/workflows/compile-k8s-templates.sh "${{ env.CUSTOM_ENVIRONMENT }}"
           K8S_NAMESPACE_NAME=$(./.github/workflows/get-namespace-name.js)
           echo "K8S_NAMESPACE_NAME=$K8S_NAMESPACE_NAME" >> $GITHUB_ENV
+      - name: Get repository team ids
+        uses: actions/github-script@v5
+        id: repo-teams
+        with:
+          result-encoding: string
+          github-token: ${{ secrets.ADMIN_GITHUB_TOKEN }}
+          script: |
+            const teamsResponse = await github.rest.repos.listTeams({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            if (teamsResponse.status === 200) {
+              const teams = teamsResponse.data;
+              if (teams && teams.length > 0) {
+                return teams
+                  .map((team) => team.slug)
+                  .join(' ');
+              }
+            }
+            return '';
+      - name: Grant rancher member to teams
+        if: steps.repo-teams.outputs.result != ''
+        run: |
+          for team in "${{ steps.repo-teams.outputs.result }}"
+          do
+            kubectl create rolebinding ${team}-read-all --group="${{ github.repository_owner }}:$team" --clusterrole=cluster-read-all -n "${{ env.K8S_NAMESPACE_NAME }}" --save-config --dry-run=client -o yaml | kubectl apply -f -
+            kubectl create clusterrolebinding ${team}-read-ns --group="${{ github.repository_owner }}:$team" --clusterrole=cluster-read-namespaces --save-config --dry-run=client -o yaml | kubectl apply -f -
+          done
       - name: Delete job if exists
         if: steps.resource-type-data.outputs.data == 'Job'
         run: ./.github/workflows/remove-job-if-exists.sh "${{ env.K8S_NAMESPACE_NAME }}" "${{ steps.project-name-data.outputs.data }}" "${{ env.CUSTOM_ENVIRONMENT }}"

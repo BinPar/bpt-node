@@ -9,7 +9,7 @@ namespace: ""
 hasIngress: True
 #@schema/nullable
 useHttp: True
-defaultRootDomain: "binpar.cloud"
+defaultRootDomain: "binpar.online"
 productionDomain: ""
 environment: ""
 healthcheckPath: "/healthcheck"

@@ -67,7 +67,6 @@ En el archivo `docs/examples/template-values.yml` tenéis un ejemplo de una conf
 
 A continuación vemos lo que es cada configuración:
 
- - rancherProjectName: **Required** String - Indica el nombre del proyecto de Rancher en el que se crearán todos los recursos.
  - projectName: **Required** String - Indica el nombre del proyecto y se usa en los templates de k8s
  - resourceType: **Required** String - Sólo puede ser `Deploy`, `Job` o `CronJob`
  - hasIngress: **Required** Boolean - Indica cuándo se debe o no crear el ingress y todo lo relacionado con este.
@@ -101,6 +100,9 @@ A continuación vemos lo que es cada configuración:
  - issuerSolvers: YAML array - Aquí se puede especificar N solvers del Issuer de cert-manager que sustituyen a la de por defecto.
  - cronJobAdditionalConfig: YAML dict - Aquí se pueden especificar todas las configuraciones adicionales que deba usar el CronJob (https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.22/#cronjobspec-v1-batch)
  - jobAdditionalConfig: YAML dict - Aquí se pueden especificar todas las configuraciones adicionales que deba usar el Job (https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.22/#jobspec-v1-batch)
+ - volumes: YAML array - Aquí se puede especificar N volúmenes que se añadirán al deploy.
+ - volumeClaims: YAML array - Aquí se puede especificar N volume claims que se crearán como parte del despliegue (Ver `docs/examples/template-values.yml` para ejemplo de uso).
+ - volumeStorages: YAML array - Aquí se puede especificar N volume storages que se crearán como parte del despliegue (Ver `docs/examples/template-values.yml` para ejemplo de uso).
 
 ## Healthcheck y tests
 

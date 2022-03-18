@@ -13,6 +13,12 @@
 metadata:
   labels: #@ utils.defaultLabels("pod")
 spec:
+  #@ if data.values.volumes:
+  volumes:
+  #@   for volume in data.values.volumes:
+    - #@ {"name": volume.name, "persistentVolumeClaim": volume.persistentVolumeClaim}
+  #@   end
+  #@ end
   #@ if/end data.values.resourceType != 'Deploy':
   restartPolicy: Never
   containers:
@@ -32,6 +38,12 @@ spec:
         #@   for env in data.values.additionalDeployEnv:
         - #@ utils.recursiveLookupForStringAndReplace(env, "##ENVIRONMENT", data.values.environment)
         #@   end
+      #@ end
+      #@ if data.values.volumes:
+      volumeMounts:
+      #@   for volume in data.values.volumes:
+        - #@ {"name": volume.name, "mountPath": volume.mountPath}
+      #@   end
       #@ end
       #@ if data.values.useHttp:
       ports:

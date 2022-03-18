@@ -1,6 +1,5 @@
 #@data/values-schema
 ---
-rancherProjectName: ""
 projectName: ""
 resourceType: ""
 #@schema/nullable
@@ -48,3 +47,26 @@ schedule: ""
 cronJobAdditionalConfig:
 #@schema/type any=True
 jobAdditionalConfig:
+#@schema/type any=True
+volumes:
+#!  - name: ''
+#!    persistentVolumeClaim:
+#!      claimName: ''
+#!    mountPath: ''
+#@schema/type any=True
+volumeClaims:
+#!  - name: ''
+#!    storageClassName: gp2
+#!    accessModes:
+#!      - ReadWriteOnce
+#!    resources:
+#!      requests:
+#!        storage: ''
+#@schema/type any=True
+volumeStorages:
+#!  - name: ''
+#!    storageClassName: gp2
+#!    capacity:
+#!      storage: ''
+#!    accessModes:
+#!      - ReadWriteOnce

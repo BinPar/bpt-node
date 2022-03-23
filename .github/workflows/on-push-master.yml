@@ -123,12 +123,7 @@ jobs:
             return '';
       - name: Grant read permissions to Github teams
         if: steps.repo-teams.outputs.result != ''
-        run: |
-          for team in "${{ steps.repo-teams.outputs.result }}"
-          do
-            kubectl create rolebinding ${team}-read-all --group="${{ github.repository_owner }}:$team" --clusterrole=cluster-read-all -n "${{ env.K8S_NAMESPACE_NAME }}" --save-config --dry-run=client -o yaml | kubectl apply -f -
-            kubectl create clusterrolebinding ${team}-read-ns --group="${{ github.repository_owner }}:$team" --clusterrole=cluster-read-namespaces --save-config --dry-run=client -o yaml | kubectl apply -f -
-          done
+        run: ./.github/workflows/create-k8s-team-roles.sh "${{ env.K8S_NAMESPACE_NAME }}" "${{ steps.repo-teams.outputs.result }}" "${{ github.repository_owner }}"
       - name: Delete job if exists
         if: steps.resource-type-data.outputs.data == 'Job'
         run: ./.github/workflows/remove-job-if-exists.sh "${{ env.K8S_NAMESPACE_NAME }}" "${{ steps.project-name-data.outputs.data }}" "${{ env.CUSTOM_ENVIRONMENT }}"

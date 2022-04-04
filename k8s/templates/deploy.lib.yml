@@ -14,8 +14,6 @@ metadata:
   labels: #@ utils.defaultLabels("pod")
 spec:
   #@ if data.values.volumes:
-  securityContext:
-    fsGroup: 2000
   volumes:
   #@   for volume in data.values.volumes:
     - #@ {"name": volume.name, "persistentVolumeClaim": volume.persistentVolumeClaim}
@@ -42,6 +40,8 @@ spec:
         #@   end
       #@ end
       #@ if data.values.volumes:
+      securityContext:
+        privileged: true
       volumeMounts:
       #@   for volume in data.values.volumes:
         - #@ {"name": volume.name, "mountPath": volume.mountPath}

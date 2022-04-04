@@ -58,6 +58,22 @@ cronJobAdditionalConfigByEnvironment:
   release:
 #@schema/type any=True
 jobAdditionalConfig:
+jobAdditionalConfigByEnvironment:
+  #@schema/type any=True
+  test:
+  #@schema/type any=True
+  pre-release:
+  #@schema/type any=True
+  release:
+#@schema/type any=True
+podAdditionalConfig:
+podAdditionalConfigByEnvironment:
+  #@schema/type any=True
+  test:
+  #@schema/type any=True
+  pre-release:
+  #@schema/type any=True
+  release:
 #@schema/type any=True
 volumes:
 #!  - name: ''

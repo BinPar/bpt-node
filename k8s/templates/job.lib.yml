@@ -6,6 +6,8 @@
 #@ def getJobSpec():
 #@ if/end data.values.jobAdditionalConfig:
 _: #@ template.replace(data.values.jobAdditionalConfig)
+#@ if/end data.values.jobAdditionalConfigByEnvironment and data.values.jobAdditionalConfigByEnvironment[data.values.environment]:
+_: #@ template.replace(data.values.jobAdditionalConfigByEnvironment[data.values.environment])
 template: #@ getPodSpec()
 #@ end
 

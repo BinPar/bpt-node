@@ -49,6 +49,13 @@ issuerSolvers:
 schedule: ""
 #@schema/type any=True
 cronJobAdditionalConfig:
+cronJobAdditionalConfigByEnvironment:
+  #@schema/type any=True
+  test:
+  #@schema/type any=True
+  pre-release:
+  #@schema/type any=True
+  release:
 #@schema/type any=True
 jobAdditionalConfig:
 #@schema/type any=True

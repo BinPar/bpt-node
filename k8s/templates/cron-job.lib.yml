@@ -14,6 +14,8 @@ spec:
   schedule: #@ data.values.schedule
   #@ if/end data.values.cronJobAdditionalConfig:
   _: #@ template.replace(data.values.cronJobAdditionalConfig)
+  #@ if/end data.values.cronJobAdditionalConfigByEnvironment and data.values.cronJobAdditionalConfigByEnvironment[data.values.environment]:
+  _: #@ template.replace(data.values.cronJobAdditionalConfigByEnvironment[data.values.environment])
   jobTemplate:
     metadata:
       labels: #@ utils.defaultLabels("job")

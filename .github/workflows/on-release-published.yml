@@ -73,9 +73,6 @@ jobs:
               }
             }
             return '';
-      - name: Grant read permissions to Github teams
-        if: steps.repo-teams.outputs.result != ''
-        run: ./.github/workflows/create-k8s-team-roles.sh "${{ env.K8S_NAMESPACE_NAME }}" "${{ steps.repo-teams.outputs.result }}" "${{ github.repository_owner }}"
       - name: Pull version docker image for tag
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -101,6 +98,9 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:release
           ./.github/workflows/create-k8s-if-not-exists.sh "release"
           echo "TAG_TYPE=release" >> $GITHUB_ENV
+      - name: Grant read permissions to Github teams
+        if: steps.repo-teams.outputs.result != ''
+        run: ./.github/workflows/create-k8s-team-roles.sh "${{ env.K8S_NAMESPACE_NAME }}" "${{ steps.repo-teams.outputs.result }}" "${{ github.repository_owner }}"
       - name: Read resourceType name
         uses: KJ002/read-yaml@1.5
         id: resource-type-data

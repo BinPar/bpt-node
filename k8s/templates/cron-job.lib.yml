@@ -4,7 +4,7 @@
 #@ load("job.lib.yml", "getJobSpec")
 
 #@ def getCronJob():
-apiVersion: batch/v1beta1
+apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: #@ utils.cronJobName()
